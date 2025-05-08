@@ -1,1 +1,0 @@
-# firefit-score-converter
