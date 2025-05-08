@@ -1,9 +1,6 @@
 import pandas as pd
 import sys
 
-# ─────────────────────────────
-# 1. 工具函式：年齡➜年齡層
-# ─────────────────────────────
 def age_to_group(age):
     if pd.isna(age):
         return None
@@ -17,13 +14,9 @@ def age_to_group(age):
     else:
         return "50+"
 
-# ─────────────────────────────
-# 2. 工具函式：查表取得得分
-# ─────────────────────────────
 def get_score(df_lookup, sex, age_group, item, value):
     if pd.isna(value) or pd.isna(sex) or pd.isna(age_group):
         return 0
-
     rows = df_lookup[
         (df_lookup["性別"] == sex)
         & (df_lookup["年齡層"] == age_group)
@@ -31,41 +24,27 @@ def get_score(df_lookup, sex, age_group, item, value):
     ]
     if rows.empty:
         return 0
-
     if item in BIG_BETTER:
         ok = rows[rows["測驗值"] <= value]   # 大值越好
     else:
         ok = rows[rows["測驗值"] >= value]   # 小值越好
-
     return 0 if ok.empty else ok["得分"].max()
 
-# ─────────────────────────────
-# 3. 主程式入口
-# ─────────────────────────────
 if __name__ == "__main__":
-    # 參數檢查
     if len(sys.argv) != 4:
         print("使用方式：python score_converter_fixed.py 成績輸入.xlsx 換算表.xlsx 輸出.xlsx")
         sys.exit(1)
 
     input_file, lookup_file, output_file = sys.argv[1:4]
 
-    # 讀取資料
     df_input  = pd.read_excel(input_file)
     df_lookup = pd.read_excel(lookup_file)
 
-    # 年齡層補齊
     df_input["年齡層"] = df_input["年齡"].apply(age_to_group)
 
-    # 項目設定
     BIG_BETTER = {
-        "立定跳遠",
-        "後拋擲遠",
-        "折返跑",
-        "菱形槓硬舉",
-        "懸吊屈體",
-        "懸吊秒數",
-        "六角槓負重行走"
+        "立定跳遠", "後拋擲遠", "折返跑", "菱形槓硬舉",
+        "懸吊屈體", "懸吊秒數", "六角槓負重行走"
     }
 
     ITEM_COL = {
@@ -79,7 +58,6 @@ if __name__ == "__main__":
         "1500跑步":       "1500公尺跑步(秒)"
     }
 
-    # 計算各項得分
     for item, col in ITEM_COL.items():
         score_col = f"{item}得分"
         df_input[score_col] = df_input.apply(
@@ -93,10 +71,8 @@ if __name__ == "__main__":
             axis=1
         )
 
-    # 總分
     score_cols = [f"{item}得分" for item in ITEM_COL]
     df_input["總分"] = df_input[score_cols].sum(axis=1)
 
-    # 輸出
     df_input.to_excel(output_file, index=False)
     print(f"✅ 換算完成，結果已輸出到 {output_file}")
